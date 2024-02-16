@@ -93,6 +93,8 @@ if (typeof global.process === 'undefined')
           $element = this.element,
           $stop = this.$stop = $('.stop', $element),
           $start = this.$start = $('.start', $element),
+          $downloadCsv = this.$downloadCsv = $('#download_csv', $element),
+          $downloadLogs = this.$downloadCsv = $('#download_log', $element),
           $queryTexts = $('.querytext'),
           $queryContexts = $('.querycontext'),
           $queryResultsToTrees = $('.results-to-tree'),
@@ -111,7 +113,8 @@ if (typeof global.process === 'undefined')
           $showDetails = this.$showDetails = $('.details-toggle', $element),
           $proxyDefault = $('.proxy-default', $element);
       this.$details = $('.details', $element);
-
+      this.bindingResults = [];
+      this.logs = '';
       // Replace non-existing elements by an empty text box
       if (!$datasources.length) $datasources = this.$datasources = $('<select>');
       if (!$results.length) $results = $('<div>');
@@ -235,6 +238,10 @@ if (typeof global.process === 'undefined')
       // Set up starting and stopping
       $start.click(this._startExecution.bind(this));
       $stop.click(this._stopExecutionForcefully.bind(this));
+
+      // Download csv data
+      $downloadCsv.click(this._downloadCSV.bind(this));
+      $downloadLogs.click(this._downloadLog.bind(this));
 
       // Set up details toggling
       $showDetails.click(function () {
@@ -680,6 +687,37 @@ if (typeof global.process === 'undefined')
       }
     },
 
+    _downloadCSV: function () {
+      if (!this._resultCount) return alert('Please execute a query to download');
+      else {
+        let csvContent = 'data:text/csv;charset=utf-8,';
+        let header = Object.keys(this.bindingResults[0]);
+        csvContent += [header].map(e => e.join(',')) + '\n';
+        this.bindingResults.forEach(function (v, i, a) {
+          let line = [];
+          header.forEach(function (h, i) {
+            line.push(v[h]);
+          });
+          csvContent += [line].map(e => e.join(',')) + '\n';
+        });
+        let encodedUri = encodeURI(csvContent);
+        window.open(encodedUri);
+      }
+    },
+    _downloadLog: function () {
+      let filename = 'execution.log';
+
+      let blob = new Blob([this.logs], { type: 'text/json' });
+      let e    = document.createEvent('MouseEvents');
+      let a    = document.createElement('a');
+
+      a.download = filename;
+      a.href = window.URL.createObjectURL(blob);
+      a.dataset.downloadurl =  ['text/json', a.download, a.href].join(':');
+      e.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+      a.dispatchEvent(e);
+    },
+
     // Starts query execution
     _startExecution: function () {
       var datasources = this.$datasources.val() || [];
@@ -694,6 +732,8 @@ if (typeof global.process === 'undefined')
       }
 
       // Clear results and log
+      this.bindingResults = [];
+      this.logs = [];
       this.$stop.show();
       this.$start.hide();
       this._resultsScroller.removeAll();
@@ -799,6 +839,7 @@ if (typeof global.process === 'undefined')
       // For SELECT queries, add the rows to the result
       case 'bindings':
         this._writeResult = function (row) {
+          this.bindingResults.push(row);
           this._resultsScroller.addContent([row]);
         };
         this._writeEnd = function () {
@@ -971,7 +1012,9 @@ if (typeof global.process === 'undefined')
         case 'queryInfo': return self._initResults(data.queryType);
         case 'result':    return self._addResult(data.result);
         case 'end':       return self._endResults();
-        case 'log':       return self._logAppender(data.log);
+        case 'log':
+          self.logs += data.log;
+          return self._logAppender(data.log);
         case 'error':     return this.onerror(data.error);
         case 'webIdName': return self._setWebIdName(data.name);
         }
