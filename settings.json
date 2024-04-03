@@ -21,24 +21,19 @@
   },
   "datasources": [
     {
-      "name": "FRINK Wikidata SPARQL",
-      "url": "https://frink.apps.renci.org/wikidata/sparql"
+      "name": "FRINK Wikidata",
+      "url": "https://frink.apps.renci.org/wikidata/sparql",
+      "multisource": "https://frink.apps.renci.org/ldf/wikidata"
     },
     {
-      "name": "FRINK Wikidata TPF",
-      "url": "https://frink.apps.renci.org/ldf/wikidata"
-    },
-    {
-      "name": "FRINK Ubergraph SPARQL",
-      "url": "https://frink.apps.renci.org/ubergraph/sparql"
-    },
-    {
-      "name": "FRINK Ubergraph TPF",
-      "url": "https://frink.apps.renci.org/ldf/ubergraph"
+      "name": "FRINK Ubergraph",
+      "url": "https://frink.apps.renci.org/ubergraph/sparql",
+      "multisource": "https://frink.apps.renci.org/ldf/ubergraph"
     },
     {
       "name": "KnowWhereGraph SPARQL",
-      "url": "sparql@https://stko-kwg.geog.ucsb.edu/sparql"
+      "url": "sparql@https://stko-kwg.geog.ucsb.edu/sparql",
+      "multisource": ""
     }
   ],
   "prefixes": {
