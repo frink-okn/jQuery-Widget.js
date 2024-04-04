@@ -25,6 +25,9 @@ require('leaflet/dist/images/marker-icon.png');
 require('leaflet/dist/images/marker-icon-2x.png');
 require('leaflet/dist/images/marker-shadow.png');
 
+// Import datasource settings
+var settings = require('../settings.json');
+
 // Polyfill process for readable-stream when it is not defined
 if (typeof global.process === 'undefined')
   global.process = require('process');
@@ -145,12 +148,32 @@ if (typeof global.process === 'undefined')
         create_option_text: 'Add datasource',
       });
       $datasources.change(function () {
-        // Inherit the transience of the previous selected datasources
-        var newSelection = toHash($datasources.val(), 'persistent');
-        Object.keys(options.selectedDatasources).forEach(function (lastValue) {
-          if (lastValue in newSelection)
-            newSelection[lastValue] = options.selectedDatasources[lastValue];
-        });
+        // Check if multiple datasources are selected
+        var newSelection = {};
+        if ($datasources.val()?.length > 1) {
+          var multiDatasourceArray = [];
+          var urlsToRehash = [];
+
+          $datasources.val().forEach(function (url, index) {
+            var multiDatasourceUrl = settings.datasources.find(ds => ds.url === url).multisource;
+            multiDatasourceArray.push(multiDatasourceUrl);
+            if (url in options.selectedDatasources)
+              urlsToRehash.push(multiDatasourceUrl);
+          });
+
+          newSelection = toHash(multiDatasourceArray, 'persistent');
+        }
+        // When a single/no datasource is selected
+        else {
+          newSelection = toHash($datasources.val(), 'persistent');
+
+          // Inherit the transience of the previous selected datasources
+          Object.keys(options.selectedDatasources).forEach(function (lastValue) {
+            if (lastValue in newSelection)
+              newSelection[lastValue] = options.selectedDatasources[lastValue];
+          });
+        }
+
         self._setOption('selectedDatasources', newSelection);
       });
 
@@ -436,15 +459,22 @@ if (typeof global.process === 'undefined')
         $options.each(function (index) {
           if (index > 0) {
             var $option = $(this), url = $(this).val();
-            $option.prop('selected', url in selected);
+            $option.prop('selected', url in selected || settings.datasources.find(ds => ds.url === url).multisource in selected);
             $option.toggleClass('search-choice-transient', !!(url in selected && value[url] === 'transient'));
-            selected[url] = 'default';
+            if (url in selected)
+              selected[url] = 'default';
+            else if (settings.datasources.find(ds => ds.url === url).multisource in selected)
+              selected[settings.datasources.find(ds => ds.url === url).multisource] = 'default';
           }
         });
         // Add and select chosen datasources that were not in the list yet
         $datasources.append($.map(selected, function (exists, url) {
-          return exists === 'default' ? null :
-            $('<option>', { text: url, value: url, selected: true });
+          if (exists === 'default')
+            return null;
+          else {
+            var text = settings.datasources.find(ds => ds.multisource === url).name;
+            return $('<option>', { text: text, value: url, selected: true });
+          }
         })).trigger('chosen:updated');
         // Update the query set
         this._loadQueries(value);
@@ -754,7 +784,7 @@ if (typeof global.process === 'undefined')
       // Let the worker execute the query
       var context = {
         ...this._getQueryContext(),
-        sources: datasources.map(function (datasource) {
+        sources: Object.keys(this.options.selectedDatasources).map(function (datasource) {
           var type;
           var posAt = datasource.indexOf('@');
           if (posAt > 0) {
