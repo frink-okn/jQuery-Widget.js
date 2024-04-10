@@ -36,8 +36,56 @@ function initEngine(config) {
     config.context.queryFormat = { language: config.context.queryFormat };
 }
 
+
+
+
+
+
+
+
+
 // Handlers of incoming messages
 var handlers = {
+
+  querycsv: function (config) {
+    initEngine(config);
+    config.context.log = logger;
+    engine.query(config.query, config.context).then(async function (result){
+      const { data } = await engine.resultToString(result, "text/csv");
+      if (result.resultType === 'bindings') {
+
+        const decoder = new TextDecoder("utf-8");
+        const queuingStrategy = new CountQueuingStrategy({ highWaterMark: 1 });
+        let result = "";
+        const writableStream = new WritableStream(
+          {
+            // Implement the sink
+            write(chunk) {
+              return new Promise((resolve, reject) => {
+                const buffer = new ArrayBuffer(1);
+                const view = new Uint8Array(buffer);
+                view[0] = chunk;
+                const decoded = decoder.decode(view, { stream: true });
+                console.log(`Chunk decoded: ${decoded}`);
+                result += decoded;
+                resolve();
+              });
+            },
+            close() {
+                console.log(result)
+            },
+            abort(err) {
+              console.error("Sink error:", err);
+            },
+          },
+          queuingStrategy,
+        );
+        data.pipe(writableStream)
+      }
+
+
+    })
+  },
   // Execute the given query with the given options
   query: function (config) {
     initEngine(config);
@@ -48,7 +96,6 @@ var handlers = {
       .then(async function (result) {
         // Post query metadata
         postMessage({ type: 'queryInfo', queryType: result.resultType });
-
         var bindings = result.resultType === 'bindings';
         var resultsToTree = config.resultsToTree;
         switch (result.resultType) {

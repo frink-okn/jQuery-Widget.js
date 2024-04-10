@@ -718,21 +718,54 @@ if (typeof global.process === 'undefined')
     },
 
     _downloadCSV: function () {
-      if (!this._resultCount) return alert('Please execute a query to download');
-      else {
-        let csvContent = 'data:text/csv;charset=utf-8,';
-        let header = Object.keys(this.bindingResults[0]);
-        csvContent += [header].map(e => e.join(',')) + '\n';
-        this.bindingResults.forEach(function (v, i, a) {
-          let line = [];
-          header.forEach(function (h, i) {
-            line.push(v[h]);
-          });
-          csvContent += [line].map(e => e.join(',')) + '\n';
-        });
-        let encodedUri = encodeURI(csvContent);
-        window.open(encodedUri);
+      // Let the worker execute the query
+      var context = {
+        ...this._getQueryContext(),
+        sources: Object.keys(this.options.selectedDatasources).map(function (datasource) {
+          var type;
+          var posAt = datasource.indexOf('@');
+          if (posAt > 0) {
+            type = datasource.substr(0, posAt);
+            datasource = datasource.substr(posAt + 1, datasource.length);
+          }
+          datasource = resolve(datasource, window.location.href);
+          return { type: type, value: datasource };
+        }),
+      };
+      var prefixesString = '';
+      if (this.options.queryFormat === 'sparql') {
+        for (var prefix in this.options.prefixes)
+          prefixesString += 'PREFIX ' + prefix + ': <' + this.options.prefixes[prefix] + '>\n';
       }
+      var query = prefixesString + this.$queryTextsIndexed[this.options.queryFormat].val();
+      this._queryWorker.postMessage({
+        type: 'querycsv',
+        query: query,
+        context: context,
+        resultsToTree: this.options.resultsToTree,
+      });
+      //
+      //   this._queryWorker.postMessage({
+      //   type: 'querycsv',
+      //   query: query,
+      //   context: context,
+      //   resultsToTree: this.options.resultsToTree,
+      // });
+      // if (!this._resultCount) return alert('Please execute a query to download');
+      // else {
+      //   let csvContent = 'data:text/csv;charset=utf-8,';
+      //   let header = Object.keys(this.bindingResults[0]);
+      //   csvContent += [header].map(e => e.join(',')) + '\n';
+      //   this.bindingResults.forEach(function (v, i, a) {
+      //     let line = [];
+      //     header.forEach(function (h, i) {
+      //       line.push(v[h]);
+      //     });
+      //     csvContent += [line].map(e => e.join(',')) + '\n';
+      //   });
+      //   let encodedUri = encodeURI(csvContent);
+      //   window.open(encodedUri);
+      // }
     },
     _downloadLog: function () {
       let filename = 'execution.log';
