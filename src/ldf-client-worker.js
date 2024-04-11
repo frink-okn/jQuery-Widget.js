@@ -36,20 +36,12 @@ function initEngine(config) {
     config.context.queryFormat = { language: config.context.queryFormat };
 }
 
-
-
-
-
-
-
-
-
 // Handlers of incoming messages
 var handlers = {
   querycsv: async function (config) {
     initEngine(config);
-    engine.query(config.query, config.context).then(async function (result){
-      const { data } = await engine.resultToString(result, "text/csv");
+    engine.query(config.query, config.context).then(async function (result) {
+      const { data } = await engine.resultToString(result, 'text/csv');
       function readableToString(stream) {
         const chunks = [];
         return new Promise((res, rej) => {
@@ -59,15 +51,13 @@ var handlers = {
         });
       }
       if (result.resultType === 'bindings') {
-        resultsCsv = await readableToString(data);
+        let resultsCsv = await readableToString(data);
         postMessage({
-          type: "resultCsv",
-          data: resultsCsv
-        })
+          type: 'resultCsv',
+          data: resultsCsv,
+        });
       }
-
-
-    })
+    });
   },
   // Execute the given query with the given options
   query: function (config) {
