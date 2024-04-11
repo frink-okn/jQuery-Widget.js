@@ -718,21 +718,32 @@ if (typeof global.process === 'undefined')
     },
 
     _downloadCSV: function () {
-      if (!this._resultCount) return alert('Please execute a query to download');
-      else {
-        let csvContent = 'data:text/csv;charset=utf-8,';
-        let header = Object.keys(this.bindingResults[0]);
-        csvContent += [header].map(e => e.join(',')) + '\n';
-        this.bindingResults.forEach(function (v, i, a) {
-          let line = [];
-          header.forEach(function (h, i) {
-            line.push(v[h]);
-          });
-          csvContent += [line].map(e => e.join(',')) + '\n';
-        });
-        let encodedUri = encodeURI(csvContent);
-        window.open(encodedUri);
+      // Let the worker execute the query
+      var context = {
+        ...this._getQueryContext(),
+        sources: Object.keys(this.options.selectedDatasources).map(function (datasource) {
+          var type;
+          var posAt = datasource.indexOf('@');
+          if (posAt > 0) {
+            type = datasource.substr(0, posAt);
+            datasource = datasource.substr(posAt + 1, datasource.length);
+          }
+          datasource = resolve(datasource, window.location.href);
+          return { type: type, value: datasource };
+        }),
+      };
+      var prefixesString = '';
+      if (this.options.queryFormat === 'sparql') {
+        for (var prefix in this.options.prefixes)
+          prefixesString += 'PREFIX ' + prefix + ': <' + this.options.prefixes[prefix] + '>\n';
       }
+      var query = prefixesString + this.$queryTextsIndexed[this.options.queryFormat].val();
+      this._queryWorker.postMessage({
+        type: 'querycsv',
+        query: query,
+        context: context,
+        resultsToTree: this.options.resultsToTree,
+      });
     },
     _downloadLog: function () {
       let filename = 'execution.log';
@@ -1047,6 +1058,16 @@ if (typeof global.process === 'undefined')
           return self._logAppender(data.log);
         case 'error':     return this.onerror(data.error);
         case 'webIdName': return self._setWebIdName(data.name);
+        case 'resultCsv':
+          let filename = 'data.csv';
+          let blob = new Blob([data.data], { type: 'text/json' });
+          let e    = document.createEvent('MouseEvents');
+          let a    = document.createElement('a');
+          a.download = filename;
+          a.href = window.URL.createObjectURL(blob);
+          a.dataset.downloadurl =  ['text/json', a.download, a.href].join(':');
+          e.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+          a.dispatchEvent(e);
         }
       };
       this._queryWorker.onerror = function (error) {
