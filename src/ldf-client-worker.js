@@ -46,41 +46,24 @@ function initEngine(config) {
 
 // Handlers of incoming messages
 var handlers = {
-
-  querycsv: function (config) {
+  querycsv: async function (config) {
     initEngine(config);
-    config.context.log = logger;
     engine.query(config.query, config.context).then(async function (result){
       const { data } = await engine.resultToString(result, "text/csv");
+      function readableToString(stream) {
+        const chunks = [];
+        return new Promise((res, rej) => {
+          stream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+          stream.on('error', (e) => { rej(e); });
+          stream.on('end', () => { res(Buffer.concat(chunks).toString('utf-8')); });
+        });
+      }
       if (result.resultType === 'bindings') {
-
-        const decoder = new TextDecoder("utf-8");
-        const queuingStrategy = new CountQueuingStrategy({ highWaterMark: 1 });
-        let result = "";
-        const writableStream = new WritableStream(
-          {
-            // Implement the sink
-            write(chunk) {
-              return new Promise((resolve, reject) => {
-                const buffer = new ArrayBuffer(1);
-                const view = new Uint8Array(buffer);
-                view[0] = chunk;
-                const decoded = decoder.decode(view, { stream: true });
-                console.log(`Chunk decoded: ${decoded}`);
-                result += decoded;
-                resolve();
-              });
-            },
-            close() {
-                console.log(result)
-            },
-            abort(err) {
-              console.error("Sink error:", err);
-            },
-          },
-          queuingStrategy,
-        );
-        data.pipe(writableStream)
+        resultsCsv = await readableToString(data);
+        postMessage({
+          type: "resultCsv",
+          data: resultsCsv
+        })
       }
 
 
