@@ -31,9 +31,29 @@
       "multisource": "https://frink.apps.renci.org/ldf/ubergraph"
     },
     {
-      "name": "KnowWhereGraph SPARQL",
-      "url": "sparql@https://stko-kwg.geog.ucsb.edu/sparql",
-      "multisource": ""
+      "name": "DREAM-KG",
+      "url": "https://frink.apps.renci.org/dreamkg/sparql",
+      "multisource": "https://frink.apps.renci.org/ldf/dreamkg"
+    },
+    {
+      "name": "SCALES",
+      "url": "https://frink.apps.renci.org/scales/sparql",
+      "multisource": "https://frink.apps.renci.org/ldf/scales"
+    },
+    {
+      "name": "SemOpenAlex",
+      "url": "https://frink.apps.renci.org/semopenalex/sparql",
+      "multisource": "https://frink.apps.renci.org/ldf/semopenalex"
+    },
+    {
+      "name": "SUD-OKN",
+      "url": "https://frink.apps.renci.org/sudokn/sparql",
+      "multisource": "https://frink.apps.renci.org/ldf/sudokn"
+    },
+    {
+      "name": "UF-OKN",
+      "url": "https://frink.apps.renci.org/ufokn/sparql",
+      "multisource": "https://frink.apps.renci.org/ldf/ufokn"
     }
   ],
   "prefixes": {

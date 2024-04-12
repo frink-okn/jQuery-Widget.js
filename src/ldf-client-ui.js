@@ -1058,8 +1058,8 @@ if (typeof global.process === 'undefined')
           return self._logAppender(data.log);
         case 'error':     return this.onerror(data.error);
         case 'webIdName': return self._setWebIdName(data.name);
-        case 'resultCsv':
-          let filename = 'data.csv';
+        case 'downloadFile':
+          let filename = 'data.' + data.format;
           let blob = new Blob([data.data], { type: 'text/json' });
           let e    = document.createEvent('MouseEvents');
           let a    = document.createElement('a');

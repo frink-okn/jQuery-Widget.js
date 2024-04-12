@@ -41,7 +41,6 @@ var handlers = {
   querycsv: async function (config) {
     initEngine(config);
     engine.query(config.query, config.context).then(async function (result) {
-      const { data } = await engine.resultToString(result, 'text/csv');
       function readableToString(stream) {
         const chunks = [];
         return new Promise((res, rej) => {
@@ -50,12 +49,35 @@ var handlers = {
           stream.on('end', () => { res(Buffer.concat(chunks).toString('utf-8')); });
         });
       }
-      if (result.resultType === 'bindings') {
+      let { data } = null;
+      switch (result.resultType) {
+      case 'bindings':
+        data  = await engine.resultToString(result, 'text/csv');
         let resultsCsv = await readableToString(data);
         postMessage({
-          type: 'resultCsv',
+          type: 'downloadFile',
           data: resultsCsv,
+          format: 'csv',
         });
+        break;
+      case 'quads':
+        data = await engine.resultToString(result, 'text/turtle');
+        let resultsTurtle = await readableToString(data);
+        postMessage({
+          type: 'downloadFile',
+          data: resultsTurtle,
+          format: 'ttl',
+        });
+        break;
+      case 'boolean':
+        data = await engine.resultToString(result, 'simple');
+        let resultsBool = await readableToString(data);
+        postMessage({
+          type: 'downloadFile',
+          data: resultsBool,
+          format: 'txt',
+        });
+        break;
       }
     });
   },
