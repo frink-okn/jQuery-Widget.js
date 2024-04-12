@@ -49,34 +49,37 @@ var handlers = {
           stream.on('end', () => { res(Buffer.concat(chunks).toString('utf-8')); });
         });
       }
-      let { data } = null;
+
       switch (result.resultType) {
-      case 'bindings':
-        data  = await engine.resultToString(result, 'text/csv');
+      case 'bindings': {
+        let { data } = await engine.resultToString(result, 'text/csv');
         let resultsCsv = await readableToString(data);
         postMessage({
           type: 'downloadFile',
           data: resultsCsv,
           format: 'csv',
         });
+      }
         break;
-      case 'quads':
-        data = await engine.resultToString(result, 'text/turtle');
+      case 'quads': {
+        let { data } = await engine.resultToString(result, 'text/turtle');
         let resultsTurtle = await readableToString(data);
         postMessage({
           type: 'downloadFile',
           data: resultsTurtle,
           format: 'ttl',
         });
+      }
         break;
-      case 'boolean':
-        data = await engine.resultToString(result, 'simple');
+      case 'boolean': {
+        let { data } = await engine.resultToString(result, 'simple');
         let resultsBool = await readableToString(data);
         postMessage({
           type: 'downloadFile',
           data: resultsBool,
           format: 'txt',
         });
+      }
         break;
       }
     });
