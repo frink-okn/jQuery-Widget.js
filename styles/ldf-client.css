@@ -706,3 +706,14 @@ li.search-choice-focus .search-choice-close {
 .extra-information.highlighted {
   background-color: grey;
 }
+
+button.download{
+  float: right;
+  display: block;
+  margin-right: 0;
+  margin-left: auto;
+}
+
+.padded-top {
+  padding-top: 10px;
+}

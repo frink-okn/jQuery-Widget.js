@@ -38,6 +38,52 @@ function initEngine(config) {
 
 // Handlers of incoming messages
 var handlers = {
+  querycsv: async function (config) {
+    initEngine(config);
+    engine.query(config.query, config.context).then(async function (result) {
+      function readableToString(stream) {
+        const chunks = [];
+        return new Promise((res, rej) => {
+          stream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+          stream.on('error', (e) => { rej(e); });
+          stream.on('end', () => { res(Buffer.concat(chunks).toString('utf-8')); });
+        });
+      }
+
+      switch (result.resultType) {
+      case 'bindings': {
+        let { data } = await engine.resultToString(result, 'text/csv');
+        let resultsCsv = await readableToString(data);
+        postMessage({
+          type: 'downloadFile',
+          data: resultsCsv,
+          format: 'csv',
+        });
+      }
+        break;
+      case 'quads': {
+        let { data } = await engine.resultToString(result, 'text/turtle');
+        let resultsTurtle = await readableToString(data);
+        postMessage({
+          type: 'downloadFile',
+          data: resultsTurtle,
+          format: 'ttl',
+        });
+      }
+        break;
+      case 'boolean': {
+        let { data } = await engine.resultToString(result, 'simple');
+        let resultsBool = await readableToString(data);
+        postMessage({
+          type: 'downloadFile',
+          data: resultsBool,
+          format: 'txt',
+        });
+      }
+        break;
+      }
+    });
+  },
   // Execute the given query with the given options
   query: function (config) {
     initEngine(config);
@@ -48,7 +94,6 @@ var handlers = {
       .then(async function (result) {
         // Post query metadata
         postMessage({ type: 'queryInfo', queryType: result.resultType });
-
         var bindings = result.resultType === 'bindings';
         var resultsToTree = config.resultsToTree;
         switch (result.resultType) {

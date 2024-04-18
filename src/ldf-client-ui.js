@@ -25,6 +25,9 @@ require('leaflet/dist/images/marker-icon.png');
 require('leaflet/dist/images/marker-icon-2x.png');
 require('leaflet/dist/images/marker-shadow.png');
 
+// Import datasource settings
+var settings = require('../settings.json');
+
 // Polyfill process for readable-stream when it is not defined
 if (typeof global.process === 'undefined')
   global.process = require('process');
@@ -93,6 +96,8 @@ if (typeof global.process === 'undefined')
           $element = this.element,
           $stop = this.$stop = $('.stop', $element),
           $start = this.$start = $('.start', $element),
+          $downloadCsv = this.$downloadCsv = $('#download_csv', $element),
+          $downloadLogs = this.$downloadCsv = $('#download_log', $element),
           $queryTexts = $('.querytext'),
           $queryContexts = $('.querycontext'),
           $queryResultsToTrees = $('.results-to-tree'),
@@ -111,7 +116,8 @@ if (typeof global.process === 'undefined')
           $showDetails = this.$showDetails = $('.details-toggle', $element),
           $proxyDefault = $('.proxy-default', $element);
       this.$details = $('.details', $element);
-
+      this.bindingResults = [];
+      this.logs = '';
       // Replace non-existing elements by an empty text box
       if (!$datasources.length) $datasources = this.$datasources = $('<select>');
       if (!$results.length) $results = $('<div>');
@@ -142,12 +148,32 @@ if (typeof global.process === 'undefined')
         create_option_text: 'Add datasource',
       });
       $datasources.change(function () {
-        // Inherit the transience of the previous selected datasources
-        var newSelection = toHash($datasources.val(), 'persistent');
-        Object.keys(options.selectedDatasources).forEach(function (lastValue) {
-          if (lastValue in newSelection)
-            newSelection[lastValue] = options.selectedDatasources[lastValue];
-        });
+        // Check if multiple datasources are selected
+        var newSelection = {};
+        if ($datasources.val()?.length > 1) {
+          var multiDatasourceArray = [];
+          var urlsToRehash = [];
+
+          $datasources.val().forEach(function (url, index) {
+            var multiDatasourceUrl = settings.datasources.find(ds => ds.url === url).multisource;
+            multiDatasourceArray.push(multiDatasourceUrl);
+            if (url in options.selectedDatasources)
+              urlsToRehash.push(multiDatasourceUrl);
+          });
+
+          newSelection = toHash(multiDatasourceArray, 'persistent');
+        }
+        // When a single/no datasource is selected
+        else {
+          newSelection = toHash($datasources.val(), 'persistent');
+
+          // Inherit the transience of the previous selected datasources
+          Object.keys(options.selectedDatasources).forEach(function (lastValue) {
+            if (lastValue in newSelection)
+              newSelection[lastValue] = options.selectedDatasources[lastValue];
+          });
+        }
+
         self._setOption('selectedDatasources', newSelection);
       });
 
@@ -235,6 +261,10 @@ if (typeof global.process === 'undefined')
       // Set up starting and stopping
       $start.click(this._startExecution.bind(this));
       $stop.click(this._stopExecutionForcefully.bind(this));
+
+      // Download csv data
+      $downloadCsv.click(this._downloadCSV.bind(this));
+      $downloadLogs.click(this._downloadLog.bind(this));
 
       // Set up details toggling
       $showDetails.click(function () {
@@ -429,15 +459,22 @@ if (typeof global.process === 'undefined')
         $options.each(function (index) {
           if (index > 0) {
             var $option = $(this), url = $(this).val();
-            $option.prop('selected', url in selected);
+            $option.prop('selected', url in selected || settings.datasources.find(ds => ds.url === url).multisource in selected);
             $option.toggleClass('search-choice-transient', !!(url in selected && value[url] === 'transient'));
-            selected[url] = 'default';
+            if (url in selected)
+              selected[url] = 'default';
+            else if (settings.datasources.find(ds => ds.url === url).multisource in selected)
+              selected[settings.datasources.find(ds => ds.url === url).multisource] = 'default';
           }
         });
         // Add and select chosen datasources that were not in the list yet
         $datasources.append($.map(selected, function (exists, url) {
-          return exists === 'default' ? null :
-            $('<option>', { text: url, value: url, selected: true });
+          if (exists === 'default')
+            return null;
+          else {
+            var text = settings.datasources.find(ds => ds.multisource === url).name;
+            return $('<option>', { text: text, value: url, selected: true });
+          }
         })).trigger('chosen:updated');
         // Update the query set
         this._loadQueries(value);
@@ -680,6 +717,48 @@ if (typeof global.process === 'undefined')
       }
     },
 
+    _downloadCSV: function () {
+      // Let the worker execute the query
+      var context = {
+        ...this._getQueryContext(),
+        sources: Object.keys(this.options.selectedDatasources).map(function (datasource) {
+          var type;
+          var posAt = datasource.indexOf('@');
+          if (posAt > 0) {
+            type = datasource.substr(0, posAt);
+            datasource = datasource.substr(posAt + 1, datasource.length);
+          }
+          datasource = resolve(datasource, window.location.href);
+          return { type: type, value: datasource };
+        }),
+      };
+      var prefixesString = '';
+      if (this.options.queryFormat === 'sparql') {
+        for (var prefix in this.options.prefixes)
+          prefixesString += 'PREFIX ' + prefix + ': <' + this.options.prefixes[prefix] + '>\n';
+      }
+      var query = prefixesString + this.$queryTextsIndexed[this.options.queryFormat].val();
+      this._queryWorker.postMessage({
+        type: 'querycsv',
+        query: query,
+        context: context,
+        resultsToTree: this.options.resultsToTree,
+      });
+    },
+    _downloadLog: function () {
+      let filename = 'execution.log';
+
+      let blob = new Blob([this.logs], { type: 'text/json' });
+      let e    = document.createEvent('MouseEvents');
+      let a    = document.createElement('a');
+
+      a.download = filename;
+      a.href = window.URL.createObjectURL(blob);
+      a.dataset.downloadurl =  ['text/json', a.download, a.href].join(':');
+      e.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+      a.dispatchEvent(e);
+    },
+
     // Starts query execution
     _startExecution: function () {
       var datasources = this.$datasources.val() || [];
@@ -694,6 +773,8 @@ if (typeof global.process === 'undefined')
       }
 
       // Clear results and log
+      this.bindingResults = [];
+      this.logs = [];
       this.$stop.show();
       this.$start.hide();
       this._resultsScroller.removeAll();
@@ -714,7 +795,7 @@ if (typeof global.process === 'undefined')
       // Let the worker execute the query
       var context = {
         ...this._getQueryContext(),
-        sources: datasources.map(function (datasource) {
+        sources: Object.keys(this.options.selectedDatasources).map(function (datasource) {
           var type;
           var posAt = datasource.indexOf('@');
           if (posAt > 0) {
@@ -799,6 +880,7 @@ if (typeof global.process === 'undefined')
       // For SELECT queries, add the rows to the result
       case 'bindings':
         this._writeResult = function (row) {
+          this.bindingResults.push(row);
           this._resultsScroller.addContent([row]);
         };
         this._writeEnd = function () {
@@ -971,9 +1053,21 @@ if (typeof global.process === 'undefined')
         case 'queryInfo': return self._initResults(data.queryType);
         case 'result':    return self._addResult(data.result);
         case 'end':       return self._endResults();
-        case 'log':       return self._logAppender(data.log);
+        case 'log':
+          self.logs += data.log;
+          return self._logAppender(data.log);
         case 'error':     return this.onerror(data.error);
         case 'webIdName': return self._setWebIdName(data.name);
+        case 'downloadFile':
+          let filename = 'data.' + data.format;
+          let blob = new Blob([data.data], { type: 'text/json' });
+          let e    = document.createEvent('MouseEvents');
+          let a    = document.createElement('a');
+          a.download = filename;
+          a.href = window.URL.createObjectURL(blob);
+          a.dataset.downloadurl =  ['text/json', a.download, a.href].join(':');
+          e.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+          a.dispatchEvent(e);
         }
       };
       this._queryWorker.onerror = function (error) {

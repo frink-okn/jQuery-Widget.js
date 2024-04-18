@@ -21,24 +21,49 @@
   },
   "datasources": [
     {
-      "name": "FRINK Wikidata SPARQL",
-      "url": "https://frink.apps.renci.org/wikidata/sparql"
+      "name": "FRINK Wikidata",
+      "url": "https://frink.apps.renci.org/wikidata/sparql",
+      "multisource": "https://frink.apps.renci.org/ldf/wikidata"
     },
     {
-      "name": "FRINK Wikidata TPF",
-      "url": "https://frink.apps.renci.org/ldf/wikidata"
+      "name": "FRINK Ubergraph",
+      "url": "https://frink.apps.renci.org/ubergraph/sparql",
+      "multisource": "https://frink.apps.renci.org/ldf/ubergraph"
     },
     {
-      "name": "FRINK Ubergraph SPARQL",
-      "url": "https://frink.apps.renci.org/ubergraph/sparql"
+      "name": "DREAM-KG",
+      "url": "https://frink.apps.renci.org/dreamkg/sparql",
+      "multisource": "https://frink.apps.renci.org/ldf/dreamkg"
     },
     {
-      "name": "FRINK Ubergraph TPF",
-      "url": "https://frink.apps.renci.org/ldf/ubergraph"
+      "name": "SCALES",
+      "url": "https://frink.apps.renci.org/scales/sparql",
+      "multisource": "https://frink.apps.renci.org/ldf/scales"
     },
     {
-      "name": "KnowWhereGraph SPARQL",
-      "url": "sparql@https://stko-kwg.geog.ucsb.edu/sparql"
+      "name": "SemOpenAlex",
+      "url": "https://frink.apps.renci.org/semopenalex/sparql",
+      "multisource": "https://frink.apps.renci.org/ldf/semopenalex"
+    },
+    {
+      "name": "SOC-KG",
+      "url": "https://frink.apps.renci.org/sockg/sparql",
+      "multisource": "https://frink.apps.renci.org/ldf/sockg"
+    },
+    {
+      "name": "SUD-OKN",
+      "url": "https://frink.apps.renci.org/sudokn/sparql",
+      "multisource": "https://frink.apps.renci.org/ldf/sudokn"
+    },
+    {
+      "name": "UF-OKN",
+      "url": "https://frink.apps.renci.org/ufokn/sparql",
+      "multisource": "https://frink.apps.renci.org/ldf/ufokn"
+    },
+    {
+      "name": "Frink Federated SPARQL",
+      "url": "https://frink.apps.renci.org/federation/sparql",
+      "multisource": ""
     }
   ],
   "prefixes": {
