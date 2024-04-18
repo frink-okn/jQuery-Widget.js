@@ -46,6 +46,11 @@
       "multisource": "https://frink.apps.renci.org/ldf/semopenalex"
     },
     {
+      "name": "SOC-KG",
+      "url": "https://frink.apps.renci.org/sockg/sparql",
+      "multisource": "https://frink.apps.renci.org/ldf/sockg"
+    },
+    {
       "name": "SUD-OKN",
       "url": "https://frink.apps.renci.org/sudokn/sparql",
       "multisource": "https://frink.apps.renci.org/ldf/sudokn"
@@ -54,6 +59,11 @@
       "name": "UF-OKN",
       "url": "https://frink.apps.renci.org/ufokn/sparql",
       "multisource": "https://frink.apps.renci.org/ldf/ufokn"
+    },
+    {
+      "name": "Frink Federated SPARQL",
+      "url": "https://frink.apps.renci.org/federation/sparql",
+      "multisource": ""
     }
   ],
   "prefixes": {
