@@ -1,0 +1,7 @@
+# List all ontology event lables [SCALES]
+
+PREFIX scales: <http://schemas.scales-okn.org/rdf/scales#>
+SELECT DISTINCT ?ontologyLabel
+WHERE {
+    ?s scales:hasOntologyLabel ?ontologyLabel .
+} 
