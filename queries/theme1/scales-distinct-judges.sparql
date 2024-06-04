@@ -1,0 +1,8 @@
+# List distinct judges [SCALES]
+
+PREFIX scales: <http://schemas.scales-okn.org/rdf/scales#>
+SELECT DISTINCT ?judgeName
+WHERE {
+    ?s scales:hasAgentType "judge" .
+    ?s scales:hasName ?judgeName .
+}
