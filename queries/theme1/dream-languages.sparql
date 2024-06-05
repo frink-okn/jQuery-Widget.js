@@ -1,0 +1,9 @@
+# List services that are provided in more than one language
+
+PREFIX dreamkg: <http://www.semanticweb.org/dreamkg/ijcai/>
+PREFIX sdo: <http://schema.org/>
+select ?service ?languages { {
+SELECT ?service (GROUP_CONCAT(DISTINCT ?languageLabel; separator=" / ") as ?languages) {
+	?service sdo:category ?language . ?language sdo:inCodeSet dreamkg:_CategoryCodeSet_Languages . ?language sdo:codeValue ?languageLabel
+} group by ?service }
+filter(contains(?languages, " / "))}
