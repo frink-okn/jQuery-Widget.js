@@ -1,0 +1,8 @@
+# List vulnerabilities in versions of ffmpeg 
+
+PREFIX ns1: <http://example.org/ns#> .
+SELECT ?vuln ?software {
+  ?vuln ns1:affects ?package .
+  ?package ns1:isVersionOf ?software .
+  FILTER(contains(str(?software),"ffmpeg"))
+} order by ?vuln ?software

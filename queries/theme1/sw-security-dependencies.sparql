@@ -1,0 +1,7 @@
+# List software dependencies of versions of ffmpeg
+
+PREFIX ns1: <http://example.org/ns#> .
+SELECT ?package ?dependency {
+  ?package ns1:isVersionOf ?software ; ns1:dependsOn ?dependency .
+  FILTER(contains(str(?software),"ffmpeg"))
+} order by ?package ?dependency
