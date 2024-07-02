@@ -1,0 +1,7 @@
+# List all substances in the graph.
+PREFIX sa: <http://sail.ua.edu/ruralkg/substanceabuse/>
+SELECT ?substance ?name
+WHERE {
+  ?substance rdf:type sa:Substance .
+  ?substance sa:name ?name .
+}

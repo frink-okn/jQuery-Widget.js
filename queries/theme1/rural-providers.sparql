@@ -1,0 +1,9 @@
+# List all providers
+PREFIX treatment: <http://sail.ua.edu/ruralkg/treatmentprovider/>
+
+SELECT ?provider ?providerName
+WHERE {
+  ?provider rdf:type treatment:TreatmentProvider ;
+            treatment:name ?providerName .
+}
+LIMIT 100
