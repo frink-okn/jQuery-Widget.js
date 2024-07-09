@@ -1,4 +1,4 @@
-# List software dependencies of versions of ffmpeg
+# List software dependencies of versions of ffmpeg [SecureChain]
 
 PREFIX ns1: <http://example.org/ns#> .
 SELECT ?package ?dependency {

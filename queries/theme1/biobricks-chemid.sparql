@@ -1,4 +1,4 @@
-# List the names of chemical entities and optionally their CAS RNand DSSTOXSID if available. Indicate which graph the data come from.
+# List the names of chemical entities and optionally their CAS RNand DSSTOXSID if available. Indicate which graph the data come from [Biobricks]
 
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>

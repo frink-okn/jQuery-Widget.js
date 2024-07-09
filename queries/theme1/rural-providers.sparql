@@ -1,4 +1,4 @@
-# List all providers
+# List all providers [RURAL-KG]
 PREFIX treatment: <http://sail.ua.edu/ruralkg/treatmentprovider/>
 
 SELECT ?provider ?providerName

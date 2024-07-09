@@ -1,4 +1,4 @@
-# List vulnerabilities in versions of ffmpeg 
+# List vulnerabilities in versions of ffmpeg [SecureChain]
 
 PREFIX ns1: <http://example.org/ns#> .
 SELECT ?vuln ?software {
